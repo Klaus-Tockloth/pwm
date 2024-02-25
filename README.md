@@ -242,37 +242,36 @@ The following examples shows the basic package usage.
 package main
 
 import (
-	"RaspberryPi/pwm"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/Klaus-Tockloth/pwm"
 )
 
 func main() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
-
 	chip := "pwmchip2"
 	channel := "2"
 	pulse := time.Duration(500 * time.Millisecond)
 	period := time.Duration(1000 * time.Millisecond)
 	waitForPermission := time.Duration(500 * time.Millisecond)
 
-	channelHandle, err := pwm.Initialize(chip, channel, pulse, period, waitForPermission)
+	ledPwmHandle, err := pwm.Initialize(chip, channel, pulse, period, waitForPermission)
 	if err != nil {
 		log.Printf("error [%v] at pwm.Initialze()", err)
 		return
 	}
 
 	defer func() {
-		err = pwm.Unexport(&channelHandle)
+		err = pwm.Unexport(&ledPwmHandle)
 		if err != nil {
-			log.Printf("error [%v] at pwm.Unexport(), channelHandle = %#v", err, channelHandle)
+			log.Printf("error [%v] at pwm.Unexport()", err)
 		}
 	}()
 
-	err = pwm.Enable(&channelHandle)
+	err = pwm.Enable(&ledPwmHandle)
 	if err != nil {
-		log.Printf("error [%v] at pwm.Enable(), channelHandle = %#v", err, channelHandle)
+		log.Printf("error [%v] at pwm.Enable()", err)
 		return
 	}
 
@@ -280,9 +279,9 @@ func main() {
 	time.Sleep(10 * time.Second)
 
 	// adjust period width for given frequency in hz
-	err = pwm.SetPeriod(&channelHandle, pwm.FrequencyToPeriod(0.5))
+	err = pwm.SetPeriod(&ledPwmHandle, pwm.FrequencyToPeriod(0.5))
 	if err != nil {
-		log.Printf("error [%v] at pwm.SetPeriod(), channelHandle = %#v", err, channelHandle)
+		log.Printf("error [%v] at pwm.SetPeriod()", err)
 		return
 	}
 
@@ -290,22 +289,23 @@ func main() {
 	time.Sleep(10 * time.Second)
 
 	// adjust pulse width for given duty cyle in %
-	err = pwm.SetPulse(&channelHandle, pwm.DutyCycleToPulse(&channelHandle, 75.0))
+	err = pwm.SetPulse(&ledPwmHandle, pwm.DutyCycleToPulse(&ledPwmHandle, 75.0))
 	if err != nil {
-		log.Printf("error [%v] at pwm.SetPulse(), channelHandle = %#v", err, channelHandle)
+		log.Printf("error [%v] at pwm.SetPulse()", err)
 		return
 	}
 
 	fmt.Printf("LED should blink longer ...\n")
 	time.Sleep(10 * time.Second)
 
-	err = pwm.Disable(&channelHandle)
+	err = pwm.Disable(&ledPwmHandle)
 	if err != nil {
-		log.Printf("error [%v] at pwm.Disable(), channelHandle = %#v", err, channelHandle)
+		log.Printf("error [%v] at pwm.Disable()", err)
 		return
 	}
 
 	// program exit: unexport is done by defer function
+	fmt.Printf("Done\n")
 }
 ```
 
@@ -326,10 +326,11 @@ func main() {
 package main
 
 import (
-	"RaspberryPi/pwm"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/Klaus-Tockloth/pwm"
 )
 
 func main() {
@@ -352,13 +353,12 @@ func main() {
 		}
 	}()
 
+	fmt.Printf("servo neutral position ...\n")
 	err = pwm.Enable(&servoPwmHandle)
 	if err != nil {
 		log.Printf("error [%v] at pwm.Enable()", err)
 		return
 	}
-
-	fmt.Printf("servo neutral position ...\n")
 	time.Sleep(2 * time.Second)
 
 	fmt.Printf("servo min position ...\n")
@@ -383,7 +383,7 @@ func main() {
 		return
 	}
 
-	// see defer function on program exit
-	fmt.Printf("Done\n\n")
+	// program exit: unexport is done by defer function
+	fmt.Printf("Done\n")
 }
 ```
